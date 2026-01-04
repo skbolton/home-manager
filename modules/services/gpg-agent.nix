@@ -1,9 +1,8 @@
-{
-  config,
-  options,
-  lib,
-  pkgs,
-  ...
+{ config
+, options
+, lib
+, pkgs
+, ...
 }:
 let
   inherit (lib)
@@ -19,7 +18,11 @@ let
 
   inherit (config.programs.gpg) homedir;
 
-  gpgSshSupportStr = "${gpgPkg}/bin/gpg-connect-agent --quiet updatestartuptty /bye";
+  gpgSshSupportStr = ''
+    if [ -z "$SSH_CONNECTION" -o -z "$SSH_AUTH_SOCK" ] && [ "''${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]; then
+      "${gpgPkg}/bin/gpg-connect-agent --quiet updatestartuptty /bye";
+    fi
+  '';
 
   gpgBashInitStr = ''
     GPG_TTY="$(tty)"
@@ -85,10 +88,11 @@ let
 
       base32Alphabet = lib.stringToCharacters "ybndrfg8ejkmcpqxot1uwisza345h769";
       hexToIntTable = lib.listToAttrs (
-        lib.genList (x: {
-          name = lib.toLower (lib.toHexString x);
-          value = x;
-        }) 16
+        lib.genList
+          (x: {
+            name = lib.toLower (lib.toHexString x);
+            value = x;
+          }) 16
       );
 
       initState = {
@@ -97,10 +101,10 @@ let
         bufBits = 0;
       };
       go =
-        {
-          ret,
-          buf,
-          bufBits,
+        { ret
+        , buf
+        , bufBits
+        ,
         }:
         hex:
         let
@@ -125,11 +129,11 @@ let
 
   # Systemd socket unit generator.
   mkSocket =
-    {
-      desc,
-      docs,
-      stream,
-      fdName,
+    { desc
+    , docs
+    , stream
+    , fdName
+    ,
     }:
     {
       Unit = {
@@ -358,14 +362,16 @@ in
           ++ optional (!cfg.enableScDaemon) "disable-scdaemon"
           ++ optional cfg.noAllowExternalCache "no-allow-external-cache"
           ++ optional (cfg.defaultCacheTtl != null) "default-cache-ttl ${toString cfg.defaultCacheTtl}"
-          ++ optional (
-            cfg.defaultCacheTtlSsh != null
-          ) "default-cache-ttl-ssh ${toString cfg.defaultCacheTtlSsh}"
+          ++ optional
+            (
+              cfg.defaultCacheTtlSsh != null
+            ) "default-cache-ttl-ssh ${toString cfg.defaultCacheTtlSsh}"
           ++ optional (cfg.maxCacheTtl != null) "max-cache-ttl ${toString cfg.maxCacheTtl}"
           ++ optional (cfg.maxCacheTtlSsh != null) "max-cache-ttl-ssh ${toString cfg.maxCacheTtlSsh}"
-          ++ optional (
-            cfg.pinentry.package != null
-          ) "pinentry-program ${lib.getExe' cfg.pinentry.package cfg.pinentry.program}"
+          ++ optional
+            (
+              cfg.pinentry.package != null
+            ) "pinentry-program ${lib.getExe' cfg.pinentry.package cfg.pinentry.program}"
           ++ [ cfg.extraConfig ]
         );
 
@@ -386,9 +392,11 @@ in
 
       (mkIf (cfg.sshKeys != null) {
         # Trailing newlines are important
-        home.file."${homedir}/sshcontrol".text = lib.concatMapStrings (s: ''
-          ${s}
-        '') cfg.sshKeys;
+        home.file."${homedir}/sshcontrol".text = lib.concatMapStrings
+          (s: ''
+            ${s}
+          '')
+          cfg.sshKeys;
       })
 
       (lib.mkMerge [
