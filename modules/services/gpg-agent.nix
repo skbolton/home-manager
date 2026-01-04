@@ -21,6 +21,8 @@ let
   gpgSshSupportStr = ''
     if [ -z "$SSH_CONNECTION" -o -z "$SSH_AUTH_SOCK" ] && [ "''${gnupg_SSH_AUTH_SOCK_by:-0}" -ne $$ ]; then
       ${gpgPkg}/bin/gpg-connect-agent --quiet updatestartuptty /bye
+    else
+      exit 0
     fi
   '';
 
